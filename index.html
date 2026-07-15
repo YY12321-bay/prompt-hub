@@ -355,6 +355,145 @@
   .btn-like:hover { background: rgba(253,121,168,0.1); color: var(--accent); border-color: var(--accent); }
   .btn-like.liked { background: rgba(253,121,168,0.15); color: var(--accent); border-color: var(--accent); }
 
+  /* ========== 封面图片 ========== */
+  .prompt-cover {
+    width: 100%;
+    height: 180px;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 14px;
+    background: linear-gradient(135deg, var(--bg-card), var(--border));
+    position: relative;
+    cursor: pointer;
+  }
+  .prompt-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+  .prompt-card:hover .prompt-cover img { transform: scale(1.05); }
+  .prompt-cover .cover-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: var(--text-muted);
+    opacity: 0.4;
+  }
+  .cover-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 11px;
+    color: #fff;
+    display: none;
+    pointer-events: none;
+  }
+  .prompt-cover.has-image .cover-badge { display: block; }
+
+  /* ========== 图片上传区域 ========== */
+  .image-upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    background: rgba(0,0,0,0.15);
+  }
+  .image-upload-area:hover { border-color: var(--primary); background: rgba(108,92,231,0.05); }
+  .image-upload-area .upload-icon { font-size: 32px; margin-bottom: 8px; }
+  .image-upload-area .upload-text { font-size: 14px; color: var(--text-muted); }
+  .image-upload-area .upload-hint { font-size: 12px; color: var(--text-muted); opacity: 0.6; margin-top: 4px; }
+  .image-upload-area input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .image-upload-area.has-image {
+    border-color: var(--primary);
+    border-style: solid;
+    padding: 4px;
+  }
+  .image-upload-area .upload-preview {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    display: none;
+  }
+  .image-upload-area.has-image .upload-preview { display: block; }
+  .image-upload-area.has-image .upload-icon,
+  .image-upload-area.has-image .upload-text,
+  .image-upload-area.has-image .upload-hint { display: none; }
+  .upload-remove {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.6);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+  }
+  .image-upload-area.has-image .upload-remove { display: flex; }
+  .upload-remove:hover { background: rgba(253,121,168,0.8); }
+
+  /* ========== 全屏图片查看器 ========== */
+  .img-viewer {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(12px);
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    cursor: zoom-out;
+  }
+  .img-viewer.open { display: flex; }
+  .img-viewer img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 12px;
+    object-fit: contain;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+  .img-viewer .viewer-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: none;
+    font-size: 22px;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .img-viewer .viewer-close:hover { background: rgba(253,121,168,0.6); }
+
   /* ========== 空状态 ========== */
   .empty-state {
     text-align: center;
@@ -587,8 +726,11 @@
         <input type="text" id="newTitle" placeholder="例如：毛玻璃质感3D图标" required>
       </div>
       <div class="form-group">
-        <label>提示词内容 <span class="required">*</span></label>
-        <textarea id="newPrompt" placeholder="粘贴或输入你的提示词..." required></textarea>
+        <label>提示词文案 <span class="required">*</span>
+          <span style="font-weight:400;font-size:12px;color:var(--text-muted);margin-left:8px;cursor:pointer;" onclick="document.getElementById('importTxt').click()">📄 从 TXT 导入</span>
+          <input type="file" id="importTxt" accept=".txt" style="display:none" onchange="importPromptTxt(event)">
+        </label>
+        <textarea id="newPrompt" placeholder="粘贴或输入你的提示词文案..." required></textarea>
       </div>
       <div class="form-group">
         <label>分类 <span class="required">*</span></label>
@@ -598,9 +740,26 @@
         <label>简短描述</label>
         <input type="text" id="newDesc" placeholder="一句话描述这个提示词的用途">
       </div>
+      <div class="form-group">
+        <label>封面图片</label>
+        <div class="image-upload-area" id="uploadArea">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">点击选择封面图片</div>
+          <div class="upload-hint">支持 JPG / PNG / WebP，单张 ≤ 5MB<br>可从 F:\公司文件\在线提示词图片库 选取</div>
+          <img class="upload-preview" id="uploadPreview" alt="预览">
+          <button type="button" class="upload-remove" onclick="removeCoverImage(event)">✕</button>
+          <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)">
+        </div>
+      </div>
       <button type="submit" class="btn-submit">✨ 提交提示词</button>
     </form>
   </div>
+</div>
+
+<!-- ====== 全屏图片查看器 ====== -->
+<div class="img-viewer" id="imgViewer" onclick="closeImageViewer(event)">
+  <button class="viewer-close" onclick="closeImageViewer()">✕</button>
+  <img id="viewerImg" src="" alt="封面大图">
 </div>
 
 <!-- ====== Toast ====== -->
@@ -734,7 +893,8 @@ function loadPrompts() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) return JSON.parse(saved);
   } catch (e) {}
-  return JSON.parse(JSON.stringify(DEFAULT_PROMPTS));
+  // 给默认数据补上 coverImage 字段
+  return JSON.parse(JSON.stringify(DEFAULT_PROMPTS)).map(p => ({ ...p, coverImage: p.coverImage || '' }));
 }
 
 function savePrompts(data) {
@@ -794,8 +954,16 @@ function renderPrompts() {
 
   grid.innerHTML = filtered.map(p => {
     const catLabel = CATEGORIES.find(c => c.id === p.category)?.label || p.category;
+    const hasCover = !!p.coverImage;
+    const coverHtml = hasCover
+      ? `<img src="${escapeHtml(p.coverImage)}" alt="${escapeHtml(p.title)}" onclick="event.stopPropagation();openImageViewer('${escapeHtml(p.coverImage)}')">`
+      : `<div class="cover-placeholder">🖼️</div>`;
     return `
       <div class="prompt-card">
+        <div class="prompt-cover ${hasCover ? 'has-image' : ''}" onclick="${hasCover ? `openImageViewer('${escapeHtml(p.coverImage)}')` : ''}">
+          ${coverHtml}
+          <span class="cover-badge">📷 封面</span>
+        </div>
         <div class="card-header">
           <span class="card-category">${catLabel}</span>
           <span class="card-id">#${p.id}</span>
@@ -896,6 +1064,8 @@ function openModal() {
   document.getElementById('newPrompt').value = '';
   document.getElementById('newDesc').value = '';
   select.value = '3d';
+  // 清空图片
+  removeCoverImage();
 
   overlay.classList.add('open');
 }
@@ -909,17 +1079,13 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
   if (e.target === this) closeModal();
 });
 
-// ESC 关闭
-document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeModal();
-});
-
 function addPrompt(e) {
   e.preventDefault();
   const title = document.getElementById('newTitle').value.trim();
   const prompt = document.getElementById('newPrompt').value.trim();
   const category = document.getElementById('newCategory').value;
   const desc = document.getElementById('newDesc').value.trim();
+  const coverImage = document.getElementById('uploadArea').dataset.imageBase64 || '';
 
   if (!title || !prompt) {
     showToast('请填写标题和提示词内容');
@@ -932,6 +1098,7 @@ function addPrompt(e) {
     prompt,
     category,
     desc: desc || `${category} 提示词`,
+    coverImage,
     likes: 0,
     liked: false,
     createdAt: new Date().toISOString()
@@ -943,6 +1110,71 @@ function addPrompt(e) {
   updateStats();
   showToast('✅ 提示词已添加！');
 }
+
+// ============================================================
+//  封面图片处理
+// ============================================================
+function handleImageUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showToast('图片大小不能超过 5MB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const area = document.getElementById('uploadArea');
+    const preview = document.getElementById('uploadPreview');
+    preview.src = e.target.result;
+    area.classList.add('has-image');
+    area.dataset.imageBase64 = e.target.result;
+    showToast('✅ 封面已选择');
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeCoverImage(e) {
+  if (e) e.stopPropagation();
+  const area = document.getElementById('uploadArea');
+  const preview = document.getElementById('uploadPreview');
+  const input = document.getElementById('imageInput');
+  preview.src = '';
+  area.classList.remove('has-image');
+  delete area.dataset.imageBase64;
+  input.value = '';
+}
+
+function importPromptTxt(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    document.getElementById('newPrompt').value = e.target.result.trim();
+    showToast('✅ 文案已导入 (' + file.name + ')');
+  };
+  reader.readAsText(file, 'UTF-8');
+  event.target.value = '';
+}
+
+function openImageViewer(src) {
+  document.getElementById('viewerImg').src = src;
+  document.getElementById('imgViewer').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageViewer(e) {
+  if (e && e.target !== e.currentTarget) return; // 只点在遮罩层或关闭按钮关闭
+  document.getElementById('imgViewer').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ESC 关闭查看器
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageViewer();
+    closeModal();
+  }
+});
 
 // ============================================================
 //  统计
