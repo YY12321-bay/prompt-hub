@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt 灵感库</title>
+<style>
+  /* ========== 全局重置 ========== */
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  :root {
+    --primary: #6c5ce7;
+    --primary-light: #a29bfe;
+    --primary-dark: #4834d4;
+    --accent: #fd79a8;
+    --bg: #0f0f1a;
+    --bg-card: #1a1a2e;
+    --bg-card-hover: #222240;
+    --text: #e8e8f0;
+    --text-muted: #8888aa;
+    --border: #2d2d4a;
+    --radius: 16px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.3);
+    --transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+  }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ========== 滚动条 ========== */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+  /* ========== Hero 封面 ========== */
+  .hero {
+    position: relative;
+    min-height: 70vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 20px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 50%, #0f0f1a 100%);
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(108,92,231,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(253,121,168,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(0,206,201,0.08) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(108,92,231,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(108,92,231,0.05) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+  }
+  .hero-floating {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: float 6s ease-in-out infinite;
+  }
+  .hero-floating:nth-child(2) {
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(108,92,231,0.1), transparent);
+    top: -50px; right: -50px;
+    animation-delay: 0s;
+  }
+  .hero-floating:nth-child(3) {
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(253,121,168,0.08), transparent);
+    bottom: 10%; left: -30px;
+    animation-delay: 2s;
+  }
+  .hero-floating:nth-child(4) {
+    width: 150px; height: 150px;
+    background: radial-gradient(circle, rgba(0,206,201,0.08), transparent);
+    top: 30%; left: 20%;
+    animation-delay: 4s;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-20px) scale(1.05); }
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 800px; }
+  .hero-badge {
+    display: inline-block;
+    background: rgba(108,92,231,0.2);
+    border: 1px solid rgba(108,92,231,0.3);
+    color: var(--primary-light);
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-size: 14px;
+    margin-bottom: 24px;
+    backdrop-filter: blur(10px);
+  }
+  .hero h1 {
+    font-size: clamp(36px, 6vw, 72px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    background: linear-gradient(135deg, #fff 0%, var(--primary-light) 50%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p {
+    font-size: clamp(16px, 2vw, 20px);
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 32px;
+  }
+  .hero-search {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .hero-search input {
+    width: 100%;
+    padding: 16px 20px 16px 48px;
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-size: 16px;
+    backdrop-filter: blur(10px);
+    transition: var(--transition);
+    outline: none;
+  }
+  .hero-search input:focus {
+    border-color: var(--primary);
+    background: rgba(255,255,255,0.08);
+    box-shadow: 0 0 30px rgba(108,92,231,0.15);
+  }
+  .hero-search input::placeholder { color: var(--text-muted); }
+  .hero-search .search-icon {
+    position: absolute;
+    left: 18px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 18px;
+  }
+
+  /* ========== 统计栏 ========== */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 20px;
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .stat-item { text-align: center; }
+  .stat-number {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--primary-light);
+  }
+  .stat-label { font-size: 13px; color: var(--text-muted); }
+
+  /* ========== 导航栏 ========== */
+  .nav-wrapper {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(15,15,26,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .nav-inner::-webkit-scrollbar { display: none; }
+  .nav-brand {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--primary-light);
+    white-space: nowrap;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .nav-brand span { font-size: 22px; }
+  .nav-tabs { display: flex; gap: 4px; padding: 12px 0; flex-wrap: nowrap; }
+  .nav-tab {
+    padding: 8px 20px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .nav-tab:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+  .nav-tab.active {
+    color: #fff;
+    background: var(--primary);
+    box-shadow: 0 4px 15px rgba(108,92,231,0.3);
+  }
+  .nav-tab .tab-icon { margin-right: 6px; }
+
+  /* ========== 主内容区 ========== */
+  .main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+  .section-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .section-title .count {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 400;
+    background: var(--bg-card);
+    padding: 2px 12px;
+    border-radius: 20px;
+  }
+
+  /* ========== 提示词卡片网格 ========== */
+  .prompt-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 20px;
+  }
+  .prompt-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: var(--transition);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .prompt-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    box-shadow: var(--shadow);
+    background: var(--bg-card-hover);
+  }
+  .prompt-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .prompt-card .card-category {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(108,92,231,0.15);
+    color: var(--primary-light);
+    font-weight: 500;
+  }
+  .prompt-card .card-id {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .prompt-card .card-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #fff;
+  }
+  .prompt-card .card-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .prompt-card .prompt-text {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 14px 16px;
+    font-size: 13px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    line-height: 1.6;
+    color: var(--text);
+    margin-bottom: 16px;
+    flex: 1;
+    position: relative;
+    border-left: 3px solid var(--primary);
+    word-break: break-all;
+    max-height: 120px;
+    overflow-y: auto;
+  }
+  .prompt-card .card-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 18px;
+    border-radius: 10px;
+    border: none;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .btn-copy {
+    background: var(--primary);
+    color: #fff;
+    flex: 1;
+  }
+  .btn-copy:hover { background: var(--primary-dark); transform: scale(1.02); }
+  .btn-copy.copied { background: #00b894; }
+  .btn-like {
+    background: rgba(255,255,255,0.05);
+    color: var(--text-muted);
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+  }
+  .btn-like:hover { background: rgba(253,121,168,0.1); color: var(--accent); border-color: var(--accent); }
+  .btn-like.liked { background: rgba(253,121,168,0.15); color: var(--accent); border-color: var(--accent); }
+
+  /* ========== 空状态 ========== */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+
+  /* ========== Toast ========== */
+  .toast {
+    position: fixed;
+    bottom: 40px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 12px 28px;
+    border-radius: 12px;
+    font-size: 14px;
+    color: var(--text);
+    opacity: 0;
+    transition: all 0.4s ease;
+    z-index: 999;
+    backdrop-filter: blur(20px);
+    box-shadow: var(--shadow);
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); pointer-events: auto; }
+
+  /* ========== 新增模态框 ========== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 560px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s ease;
+  }
+  .modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .modal-header h2 { font-size: 22px; font-weight: 700; color: #fff; }
+  .modal-close {
+    background: rgba(255,255,255,0.05);
+    border: none;
+    color: var(--text-muted);
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-close:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+  .form-group { margin-bottom: 20px; }
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    margin-bottom: 8px;
+    color: var(--text);
+  }
+  .form-group label .required { color: var(--accent); }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(0,0,0,0.3);
+    color: var(--text);
+    font-size: 14px;
+    transition: var(--transition);
+    outline: none;
+    font-family: inherit;
+  }
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 20px rgba(108,92,231,0.1);
+  }
+  .form-group textarea { min-height: 120px; resize: vertical; }
+  .form-group select { cursor: pointer; }
+  .form-group select option { background: var(--bg-card); color: var(--text); }
+
+  .btn-submit {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+  .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(108,92,231,0.3); }
+
+  .float-add {
+    position: fixed;
+    bottom: 40px;
+    right: 40px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: #fff;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 8px 30px rgba(108,92,231,0.4);
+    transition: var(--transition);
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .float-add:hover { transform: scale(1.1) rotate(90deg); box-shadow: 0 12px 40px rgba(108,92,231,0.5); }
+
+  /* ========== 响应式 ========== */
+  @media (max-width: 768px) {
+    .hero { min-height: 60vh; }
+    .prompt-grid { grid-template-columns: 1fr; }
+    .stats-bar { gap: 20px; }
+    .nav-inner { gap: 4px; }
+    .nav-tab { padding: 6px 12px; font-size: 13px; }
+    .modal { padding: 24px; }
+    .float-add { bottom: 24px; right: 24px; width: 52px; height: 52px; font-size: 24px; }
+  }
+  @media (max-width: 480px) {
+    .nav-brand span, .nav-brand { font-size: 14px; }
+    .nav-tab { font-size: 12px; padding: 4px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ====== Hero 封面 ====== -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-floating"></div>
+  <div class="hero-floating"></div>
+  <div class="hero-floating"></div>
+  <div class="hero-content">
+    <div class="hero-badge">✨ 灵感汇聚 · 一键复制</div>
+    <h1>Prompt 灵感库</h1>
+    <p>精选高质量 AI 提示词，覆盖 3D、图标、字体、按钮、实物等设计场景，激发你的创作灵感</p>
+    <div class="hero-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索提示词..." oninput="renderPrompts()">
+    </div>
+  </div>
+</section>
+
+<!-- ====== 统计栏 ====== -->
+<div class="stats-bar" id="statsBar">
+  <div class="stat-item">
+    <div class="stat-number" id="totalCount">0</div>
+    <div class="stat-label">提示词总数</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number" id="categoryCount">0</div>
+    <div class="stat-label">分类数量</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-number" id="todayCount">0</div>
+    <div class="stat-label">今日新增</div>
+  </div>
+</div>
+
+<!-- ====== 导航栏 ====== -->
+<div class="nav-wrapper">
+  <div class="nav-inner">
+    <div class="nav-brand"><span>⚡</span> PromptHub</div>
+    <div class="nav-tabs" id="navTabs"></div>
+  </div>
+</div>
+
+<!-- ====== 主内容 ====== -->
+<main class="main">
+  <div class="section-title">
+    <span id="currentCategory">📂 全部</span>
+    <span class="count" id="displayCount">0 个</span>
+  </div>
+  <div class="prompt-grid" id="promptGrid"></div>
+</main>
+
+<!-- ====== 浮动添加按钮 ====== -->
+<button class="float-add" onclick="openModal()" title="新增提示词">＋</button>
+
+<!-- ====== 新增模态框 ====== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>📝 新增提示词</h2>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <form onsubmit="addPrompt(event)">
+      <div class="form-group">
+        <label>标题 <span class="required">*</span></label>
+        <input type="text" id="newTitle" placeholder="例如：毛玻璃质感3D图标" required>
+      </div>
+      <div class="form-group">
+        <label>提示词内容 <span class="required">*</span></label>
+        <textarea id="newPrompt" placeholder="粘贴或输入你的提示词..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label>分类 <span class="required">*</span></label>
+        <select id="newCategory" required></select>
+      </div>
+      <div class="form-group">
+        <label>简短描述</label>
+        <input type="text" id="newDesc" placeholder="一句话描述这个提示词的用途">
+      </div>
+      <button type="submit" class="btn-submit">✨ 提交提示词</button>
+    </form>
+  </div>
+</div>
+
+<!-- ====== Toast ====== -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// 数据
+// ============================================================
+const CATEGORIES = [
+  { id: 'all', label: '📂 全部', icon: '📂' },
+  { id: 'title', label: '📝 标题', icon: '📝' },
+  { id: '3d', label: '🧊 3D', icon: '🧊' },
+  { id: 'icon', label: '🎨 图标', icon: '🎨' },
+  { id: 'font', label: '🔤 字体', icon: '🔤' },
+  { id: 'button', label: '🔘 按钮', icon: '🔘' },
+  { id: 'object', label: '📦 实物', icon: '📦' },
+];
+
+const DEFAULT_PROMPTS = [
+  // === 标题 ===
+  { id: 1, title: '现代科技标题', category: 'title',
+    prompt: ' Futuristic tech headline typography, 3D chrome letters with neon glow, "INNOVATION", cinematic lighting, dark background with blue and purple gradients, ultra detailed, 8K, volumetric lighting --ar 16:9',
+    desc: '带有霓虹光效的3D金属质感科技标题' },
+  { id: 2, title: '手写艺术标题', category: 'title',
+    prompt: 'Elegant hand-lettered calligraphy headline, "CREATIVE", gold foil texture on dark navy background, soft bokeh lights, luxury magazine style, high detail, 8K resolution',
+    desc: '金箔质感的手写艺术字标题' },
+  { id: 3, title: '渐变立体字标题', category: 'title',
+    prompt: 'Bold 3D extruded text "DESIGN", vibrant gradient from pink to cyan, isometric perspective, glossy surface, floating particles, clean white background, studio lighting, vector style',
+    desc: '粉青渐变的立体浮雕标题字' },
+
+  // === 3D ===
+  { id: 4, title: '毛玻璃3D图标', category: '3d',
+    prompt: 'Frosted glass 3D icon, translucent crystal material, soft gradient colors, minimal design, floating in space, soft rim lighting, pastel pink and blue, C4D render, octane render, 8K, white background',
+    desc: '半透明毛玻璃质感的3D图标' },
+  { id: 5, title: '金属3D齿轮', category: '3d',
+    prompt: 'Brass metal 3D gear mechanism, industrial design, intricate details, reflections, warm golden lighting, depth of field, mechanical precision, product photography style, 8K, hyper-realistic',
+    desc: '黄铜金属质感的3D齿轮' },
+  { id: 6, title: '充气塑料3D字母', category: '3d',
+    prompt: 'Inflatable plastic 3D letter "A", shiny balloon texture, vibrant red color, soft studio lighting, minimal white background, playful design, realistic plastic reflections, close-up macro shot',
+    desc: '充气塑料质感的3D字母' },
+  { id: 7, title: '水晶3D宝石', category: '3d',
+    prompt: 'Faceted crystal gemstone 3D render, diamond-like refraction, rainbow prismatic light dispersion, floating on white pedestal, luxury jewelry style, ultra realistic, 8K, sharp focus',
+    desc: '多切面水晶宝石3D渲染' },
+  { id: 8, title: '黏土3D吉祥物', category: '3d',
+    prompt: 'Cute claymation style 3D mascot, soft pastel colors, smooth rounded shapes, friendly expression, studio lighting, shallow depth of field, toy photography style, warm ambient light',
+    desc: '黏土动画风格的可爱3D吉祥物' },
+
+  // === 图标 ===
+  { id: 9, title: '线性图标集', category: 'icon',
+    prompt: 'Minimalist line icon set, 24x24 grid, consistent 2px stroke, rounded caps and corners, modern style, black on white, includes: home, search, settings, user, bell, 6 icons in a row',
+    desc: '一致性的线性图标集' },
+  { id: 10, title: '渐变填充图标', category: 'icon',
+    prompt: 'Modern gradient filled icon, soft blue to purple gradient, rounded corners, subtle drop shadow, iOS style, vector art, clean white background, 512x512, professional app icon design',
+    desc: '蓝紫渐变的iOS风格填充图标' },
+  { id: 11, title: '霓虹发光图标', category: 'icon',
+    prompt: 'Neon glowing icon set, cyan and pink neon tubes, dark background with slight purple haze, cyberpunk style, vector lines with glow effect, 8K, game UI style',
+    desc: '赛博朋克霓虹发光图标' },
+  { id: 12, title: '毛玻璃图标', category: 'icon',
+    prompt: 'Frosted glass effect app icon, translucent layers, soft pastel background, subtle shadows, rounded square shape, modern iOS style, minimalist, clean, professional',
+    desc: '毛玻璃效果的APP图标' },
+  { id: 13, title: '扁平插画图标', category: 'icon',
+    prompt: 'Flat illustration style icon set, vibrant colors, geometric shapes, playful design, 2D vector art, white background, consistent style, modern and young, 6 different icons',
+    desc: '扁平几何风格的插画图标' },
+
+  // === 字体 ===
+  { id: 14, title: '赛博朋克字体', category: 'font',
+    prompt: 'Cyberpunk font design, glitch text effect, neon cyan and magenta, dark urban background, digital distortion, techy sharp edges, futuristic signage, holographic overlay, 8K',
+    desc: '带故障艺术效果的赛博朋克字体' },
+  { id: 15, title: '奢华衬线字体', category: 'font',
+    prompt: 'Luxury serif typography, gold foil texture on black marble background, elegant letter spacing, "LUXE" in classic serif font, soft rim light, high-end branding style, ultra realistic',
+    desc: '大理石背景上的烫金奢华衬线字体' },
+  { id: 16, title: '涂鸦手写字体', category: 'font',
+    prompt: 'Graffiti style hand-drawn font, spray paint texture, vibrant colors on brick wall background, street art style, expressive lettering, "CREATIVE" in bold graffiti style, urban vibe',
+    desc: '街头涂鸦风格的手写字体' },
+  { id: 17, title: '极简无衬线字体', category: 'font',
+    prompt: 'Minimalist sans-serif typography poster, black text on white, "LESS IS MORE", large kerning, editorial layout, Swiss design style, clean lines, professional, magazine quality',
+    desc: '瑞士极简风格的无衬线字体排版' },
+
+  // === 按钮 ===
+  { id: 18, title: '渐变光效按钮', category: 'button',
+    prompt: 'UI button with gradient background, purple to blue, white text "GET STARTED", rounded corners 12px, subtle inner glow, soft drop shadow, modern web design, high quality UI element',
+    desc: '紫色渐变带内发光的UI按钮' },
+  { id: 19, title: '3D立体按钮', category: 'button',
+    prompt: '3D realistic button design, extruded shape, glossy surface, vibrant green color, "CLICK ME" text, isometric perspective, studio lighting, product mockup style, ultra detailed',
+    desc: '3D立体凸起的按钮设计' },
+  { id: 20, title: '霓虹玻璃按钮', category: 'button',
+    prompt: 'Neon glassmorphism button, translucent glass with neon pink border, blur background, "SUBSCRIBE" text, glowing edge, modern UI design, dark mode, frosted glass effect',
+    desc: '霓虹边框的玻璃拟态按钮' },
+  { id: 21, title: '微交互动效按钮', category: 'button',
+    prompt: 'Micro-interaction button design, idle state with subtle pulse animation, "SEND MESSAGE", soft blue gradient, rounded pill shape, elegant shadow, modern material design',
+    desc: '带微动效的现代圆角按钮' },
+  { id: 22, title: '极简线性按钮', category: 'button',
+    prompt: 'Minimalist outline button, 1px border, transparent background, "LEARN MORE", dark text, clean and simple, elegant whitespace, modern web UI, minimal design aesthetic',
+    desc: '仅1px描边的极简线性按钮' },
+
+  // === 实物 ===
+  { id: 23, title: '极简手表产品', category: 'object',
+    prompt: 'Minimalist smartwatch product photography, sleek silver design, glowing AMOLED screen, leather strap, soft diffused lighting, pure white background, commercial product shot, 8K',
+    desc: '极简风格的智能手表产品渲染' },
+  { id: 24, title: '香水瓶设计', category: 'object',
+    prompt: 'Luxury perfume bottle on marble pedestal, amber liquid, gold sprayer, glass reflections, soft window light, elegant composition, product photography, premium branding, 8K',
+    desc: '琥珀色液体的奢华香水瓶' },
+  { id: 25, title: '运动鞋产品图', category: 'object',
+    prompt: 'White sneaker on clean background, 45 degree angle, studio lighting, mesh and leather texture, sporty dynamic pose, commercial product photography, sharp details, 8K',
+    desc: '45度角白色运动鞋产品摄影' },
+  { id: 26, title: '咖啡杯美食摄影', category: 'object',
+    prompt: 'Ceramic coffee cup with latte art, steam rising, warm morning light, wooden table background, cozy atmosphere, top-down view, food photography style, rich colors, 8K',
+    desc: '带拉花艺术的咖啡杯俯拍' },
+  { id: 27, title: '智能家居设备', category: 'object',
+    prompt: 'Smart home device product shot, white cylindrical shape, glowing LED ring, sleek modern design, soft studio lighting, minimalist composition, tech product photography, 8K',
+    desc: '白色圆柱形智能家居设备' },
+  { id: 28, title: '包装盒设计', category: 'object',
+    prompt: 'Premium product packaging box mockup, matte finish with gold foil stamping, unboxing scene, soft velvet interior, elegant composition, luxury branding, product photography',
+    desc: '高级哑光烫金包装盒展示' },
+  { id: 29, title: '耳机产品图', category: 'object',
+    prompt: 'Wireless earbuds charging case, glossy white finish, open case revealing earbuds, studio lighting, clean minimal background, tech product photography, 8K, commercial quality',
+    desc: '无线耳机充电盒产品展示' },
+  { id: 30, title: '椅子工业设计', category: 'object',
+    prompt: 'Modern ergonomic chair, minimalist design, leather and aluminum frame, curved wood backrest, soft indirect lighting, Scandinavian style, showroom photography, 8K',
+    desc: '北欧极简风格的人体工学椅' },
+];
+
+// ============================================================
+//  数据源: localStorage || 默认
+// ============================================================
+const STORAGE_KEY = 'prompt_hub_data';
+
+function loadPrompts() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) {}
+  return JSON.parse(JSON.stringify(DEFAULT_PROMPTS));
+}
+
+function savePrompts(data) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+// ============================================================
+//  状态
+// ============================================================
+let prompts = loadPrompts();
+let currentCategory = 'all';
+let nextId = prompts.length ? Math.max(...prompts.map(p => p.id)) + 1 : 1;
+
+// ============================================================
+//  渲染
+// ============================================================
+function renderNav() {
+  const container = document.getElementById('navTabs');
+  container.innerHTML = CATEGORIES.map(cat => `
+    <button class="nav-tab ${cat.id === currentCategory ? 'active' : ''}"
+            onclick="switchCategory('${cat.id}')">
+      ${cat.icon} ${cat.label}
+    </button>
+  `).join('');
+}
+
+function renderPrompts() {
+  const grid = document.getElementById('promptGrid');
+  const search = document.getElementById('searchInput').value.toLowerCase().trim();
+  const catLabel = document.getElementById('currentCategory');
+
+  const cat = CATEGORIES.find(c => c.id === currentCategory);
+  catLabel.textContent = cat ? `${cat.icon} ${cat.label}` : '📂 全部';
+
+  let filtered = prompts;
+  if (currentCategory !== 'all') {
+    filtered = filtered.filter(p => p.category === currentCategory);
+  }
+  if (search) {
+    filtered = filtered.filter(p =>
+      p.title.toLowerCase().includes(search) ||
+      p.prompt.toLowerCase().includes(search) ||
+      p.desc.toLowerCase().includes(search)
+    );
+  }
+
+  document.getElementById('displayCount').textContent = `${filtered.length} 个`;
+
+  if (filtered.length === 0) {
+    grid.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">🔍</div>
+        <p>${search ? '没有匹配的提示词，换个关键词试试？' : '这个分类还没有提示词，点击右下角 ＋ 新增一个吧！'}</p>
+      </div>`;
+    return;
+  }
+
+  grid.innerHTML = filtered.map(p => {
+    const catLabel = CATEGORIES.find(c => c.id === p.category)?.label || p.category;
+    return `
+      <div class="prompt-card">
+        <div class="card-header">
+          <span class="card-category">${catLabel}</span>
+          <span class="card-id">#${p.id}</span>
+        </div>
+        <div class="card-title">${escapeHtml(p.title)}</div>
+        <div class="card-desc">${escapeHtml(p.desc || '')}</div>
+        <div class="prompt-text">${escapeHtml(p.prompt)}</div>
+        <div class="card-actions">
+          <button class="btn btn-copy" onclick="copyPrompt(${p.id}, this)">
+            📋 复制
+          </button>
+          <button class="btn btn-like ${p.liked ? 'liked' : ''}" onclick="toggleLike(${p.id}, this)">
+            ${p.liked ? '❤️' : '🤍'} ${p.likes || 0}
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function switchCategory(catId) {
+  currentCategory = catId;
+  renderNav();
+  renderPrompts();
+}
+
+// ============================================================
+//  复制 & 点赞
+// ============================================================
+function copyPrompt(id, btn) {
+  const p = prompts.find(x => x.id === id);
+  if (!p) return;
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(p.prompt).then(() => {
+      showCopied(btn);
+    }).catch(() => {
+      fallbackCopy(p.prompt, btn);
+    });
+  } else {
+    fallbackCopy(p.prompt, btn);
+  }
+}
+
+function fallbackCopy(text, btn) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.left = '-9999px';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showCopied(btn);
+  } catch (e) {}
+  document.body.removeChild(ta);
+}
+
+function showCopied(btn) {
+  const orig = btn.innerHTML;
+  btn.innerHTML = '✅ 已复制';
+  btn.classList.add('copied');
+  setTimeout(() => {
+    btn.innerHTML = orig;
+    btn.classList.remove('copied');
+  }, 1500);
+}
+
+function toggleLike(id, btn) {
+  const p = prompts.find(x => x.id === id);
+  if (!p) return;
+  p.liked = !p.liked;
+  p.likes = (p.likes || 0) + (p.liked ? 1 : -1);
+  savePrompts(prompts);
+  renderPrompts();
+}
+
+// ============================================================
+//  新增提示词
+// ============================================================
+function openModal() {
+  const overlay = document.getElementById('modalOverlay');
+  const select = document.getElementById('newCategory');
+
+  // 填充分类选择
+  select.innerHTML = CATEGORIES.filter(c => c.id !== 'all').map(c =>
+    `<option value="${c.id}">${c.label}</option>`
+  ).join('');
+
+  // 清空表单
+  document.getElementById('newTitle').value = '';
+  document.getElementById('newPrompt').value = '';
+  document.getElementById('newDesc').value = '';
+  select.value = '3d';
+
+  overlay.classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+}
+
+// 点击遮罩关闭
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ESC 关闭
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+function addPrompt(e) {
+  e.preventDefault();
+  const title = document.getElementById('newTitle').value.trim();
+  const prompt = document.getElementById('newPrompt').value.trim();
+  const category = document.getElementById('newCategory').value;
+  const desc = document.getElementById('newDesc').value.trim();
+
+  if (!title || !prompt) {
+    showToast('请填写标题和提示词内容');
+    return;
+  }
+
+  prompts.push({
+    id: nextId++,
+    title,
+    prompt,
+    category,
+    desc: desc || `${category} 提示词`,
+    likes: 0,
+    liked: false,
+    createdAt: new Date().toISOString()
+  });
+
+  savePrompts(prompts);
+  closeModal();
+  switchCategory(category);
+  updateStats();
+  showToast('✅ 提示词已添加！');
+}
+
+// ============================================================
+//  统计
+// ============================================================
+function updateStats() {
+  const cats = new Set(prompts.map(p => p.category));
+  const today = new Date().toDateString();
+  const todayCount = prompts.filter(p => {
+    if (!p.createdAt) return false;
+    return new Date(p.createdAt).toDateString() === today;
+  }).length;
+
+  document.getElementById('totalCount').textContent = prompts.length;
+  document.getElementById('categoryCount').textContent = cats.size;
+  document.getElementById('todayCount').textContent = todayCount;
+}
+
+// ============================================================
+//  Toast
+// ============================================================
+function showToast(msg, duration = 2500) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove('show'), duration);
+}
+
+// ============================================================
+//  启动
+// ============================================================
+renderNav();
+renderPrompts();
+updateStats();
+</script>
+</body>
+</html>
