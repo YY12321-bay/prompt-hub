@@ -706,6 +706,18 @@
   </div>
 </div>
 
+<!-- ====== 数据操作栏 ====== -->
+<div style="display:flex;justify-content:center;gap:12px;padding:8px 20px;background:rgba(255,255,255,0.01);border-bottom:1px solid var(--border);flex-wrap:wrap;">
+  <button onclick="keepOnlyLatest()" style="background:rgba(253,121,168,0.1);color:var(--accent);border:1px solid rgba(253,121,168,0.2);padding:6px 16px;border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.2s;"
+          onmouseover="this.style.background='rgba(253,121,168,0.2)'" onmouseout="this.style.background='rgba(253,121,168,0.1)'">
+    🗑️ 只保留最新一条
+  </button>
+  <button onclick="clearAllPrompts()" style="background:rgba(255,255,255,0.03);color:var(--text-muted);border:1px solid var(--border);padding:6px 16px;border-radius:8px;font-size:13px;cursor:pointer;transition:all 0.2s;"
+          onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+    🧹 清空全部
+  </button>
+</div>
+
 <!-- ====== 导航栏 ====== -->
 <div class="nav-wrapper">
   <div class="nav-inner">
@@ -1073,6 +1085,36 @@ function deletePrompt(id) {
   renderPrompts();
   updateStats();
   showToast('🗑️ 已删除');
+}
+
+// ============================================================
+//  批量管理
+// ============================================================
+function keepOnlyLatest() {
+  if (prompts.length <= 1) {
+    showToast('已经只剩一条了');
+    return;
+  }
+  if (!confirm(`确定要删除其他 ${prompts.length - 1} 条提示词，只保留最新一条吗？`)) return;
+  const latest = prompts.reduce((a, b) => a.id > b.id ? a : b);
+  prompts = [latest];
+  savePrompts(prompts);
+  renderPrompts();
+  updateStats();
+  showToast(`✅ 已清理，只保留「${latest.title}」`);
+}
+
+function clearAllPrompts() {
+  if (prompts.length === 0) {
+    showToast('已经没有数据了');
+    return;
+  }
+  if (!confirm(`⚠️ 确定要删除全部 ${prompts.length} 条提示词吗？此操作不可恢复！`)) return;
+  prompts = [];
+  savePrompts(prompts);
+  renderPrompts();
+  updateStats();
+  showToast('🧹 已清空全部数据');
 }
 
 // ============================================================
