@@ -37,7 +37,7 @@
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-  /* ========== 统计栏/* ========== 统计栏 ========== */
+  /* ========== 统计栏 ========== */
   .stats-bar {
     display: flex;
     justify-content: center;
@@ -667,6 +667,25 @@
   </div>
 </div>
 
+<!-- ====== 设置弹窗 ====== -->
+<div class="modal-overlay" id="settingsOverlay" onclick="if(event.target===this)closeSettings()">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeSettings()">&times;</button>
+    <h2 style="margin-bottom:20px;">⚙️ 设置</h2>
+    <div class="form-group">
+      <label>GitHub Token（用于上传封面图片）</label>
+      <input type="password" id="githubTokenInput" placeholder="输入你的 GitHub Personal Access Token"
+             style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);color:var(--text);font-size:14px;">
+      <p style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+        Token 仅存在你浏览器本地，不会上传到任何地方。<br>
+        需要 <code>repo</code> 或 <code>contents:write</code> 权限。
+        <a href="https://github.com/settings/tokens" target="_blank" style="color:var(--primary-light);">去 GitHub 生成 →</a>
+      </p>
+    </div>
+    <button class="btn-submit" onclick="saveSettings()" style="margin-top:8px;">💾 保存</button>
+  </div>
+</div>
+
 <!-- ====== 全屏图片查看器 ====== -->
 <div class="img-viewer" id="imgViewer" onclick="closeImageViewer(event)">
   <button class="viewer-close" onclick="closeImageViewer()">✕</button>
@@ -689,6 +708,57 @@ const CATEGORIES = [
   { id: 'button', label: '🔘 按钮', icon: '🔘' },
   { id: 'object', label: '📦 实物', icon: '📦' },
 ];
+// ============================================================
+//  GitHub 图片上传（封面永久存储）
+//  用户需在「设置」中填入 GitHub Token
+// ============================================================
+const GITHUB_CONFIG = {
+  owner: 'YY12321-bay',
+  repo: 'prompt-hub',
+  branch: 'main',
+  get token() { return localStorage.getItem('github_upload_token') || ''; },
+  get rawUrl() { return `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/images/`; }
+};
+
+/** Upload a file to GitHub images/ directory. Returns the raw URL. */
+async function uploadImageToGitHub(file) {
+  if (!GITHUB_CONFIG.token) throw new Error('请先在设置中配置 GitHub Token');
+
+  const ext = file.name.split('.').pop().toLowerCase().replace(/[^a-z0-9]/, '');
+  const safeName = Date.now() + '_' + Math.random().toString(36).slice(2,6) + '.' + (ext || 'png');
+  const path = 'images/' + safeName;
+
+  // Read file as base64
+  const b64 = await new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = () => reject(new Error('读取文件失败'));
+    r.readAsDataURL(file);
+  });
+
+  // Upload via GitHub API
+  const resp = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${path}`, {
+    method: 'PUT',
+    headers: {
+      'Authorization': 'token ' + GITHUB_CONFIG.token,
+      'Content-Type': 'application/json',
+      'Accept': 'application/vnd.github.v3+json'
+    },
+    body: JSON.stringify({
+      message: 'Upload cover: ' + safeName,
+      content: b64,
+      branch: GITHUB_CONFIG.branch
+    })
+  });
+
+  if (!resp.ok) {
+    const err = await resp.json().catch(() => ({}));
+    throw new Error('GitHub 上传失败: ' + (err.message || resp.status));
+  }
+
+  return GITHUB_CONFIG.rawUrl + safeName;
+}
+
 
 const DEFAULT_PROMPTS = [
   // === 标题 ===
@@ -923,7 +993,7 @@ function renderPrompts() {
     const catLabel = CATEGORIES.find(c => c.id === p.category)?.label || p.category;
     const hasCover = !!p.coverImage;
     const coverHtml = hasCover
-      ? `<img src="${escapeHtml(p.coverImage)}" alt="${escapeHtml(p.title)}" onclick="event.stopPropagation();openImageViewer('${escapeHtml(p.coverImage)}')">`
+      ? `<img src="${escapeHtml(p.coverImage)}" alt="${escapeHtml(p.title)}" loading="lazy" onerror="this.parentElement.classList.remove('has-image');this.remove()" onclick="event.stopPropagation();openImageViewer('${escapeHtml(p.coverImage)}')">`
       : `<div class="cover-placeholder">🖼️</div>`;
     return `
       <div class="prompt-card">
@@ -1071,7 +1141,7 @@ function addPrompt(e) {
     const category = document.getElementById('newCategory').value;
     const desc = document.getElementById('newDesc').value.trim();
     const uploadArea = document.getElementById('uploadArea');
-    const coverImage = uploadArea ? (uploadArea.dataset.imageBase64 || '') : '';
+    const coverImage = uploadArea ? (uploadArea.dataset.githubUrl || '') : '';
 
     if (!title || !prompt) {
       showToast('请填写标题和提示词文案');
@@ -1104,23 +1174,43 @@ function addPrompt(e) {
 // ============================================================
 //  封面图片处理
 // ============================================================
-function handleImageUpload(event) {
+async function handleImageUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
     showToast('图片大小不能超过 5MB');
     return;
   }
+
+  // 显示本地预览（立即反馈）
   const reader = new FileReader();
   reader.onload = function(e) {
-    const area = document.getElementById('uploadArea');
     const preview = document.getElementById('uploadPreview');
     preview.src = e.target.result;
-    area.classList.add('has-image');
-    area.dataset.imageBase64 = e.target.result;
-    showToast('✅ 封面已选择');
   };
   reader.readAsDataURL(file);
+
+  const area = document.getElementById('uploadArea');
+  const uploadText = area.querySelector('.upload-text');
+  const originalText = uploadText.textContent;
+  uploadText.textContent = '⏳ 上传到 GitHub 中...';
+  showToast('⏳ 正在上传封面到 GitHub...');
+
+  try {
+    const url = await uploadImageToGitHub(file);
+    area.classList.add('has-image');
+    area.dataset.githubUrl = url;
+    uploadText.textContent = '✅ 已上传到 GitHub';
+    showToast('✅ 封面已永久保存！');
+  } catch (err) {
+    showToast('❌ 上传失败: ' + err.message);
+    uploadText.textContent = originalText;
+    area.classList.remove('has-image');
+    delete area.dataset.githubUrl;
+    const preview = document.getElementById('uploadPreview');
+    preview.src = '';
+    console.error(err);
+  }
 }
 
 function removeCoverImage(e) {
@@ -1130,8 +1220,11 @@ function removeCoverImage(e) {
   const input = document.getElementById('imageInput');
   preview.src = '';
   area.classList.remove('has-image');
+  delete area.dataset.githubUrl;
   delete area.dataset.imageBase64;
   input.value = '';
+  const uploadText = area.querySelector('.upload-text');
+  if (uploadText) uploadText.textContent = '点击选择封面图片';
 }
 
 function importPromptTxt(event) {
@@ -1157,6 +1250,47 @@ function closeImageViewer(e) {
   document.getElementById('imgViewer').classList.remove('open');
   document.body.style.overflow = '';
 }
+
+// ============================================================
+//  设置
+// ============================================================
+function openSettings() {
+  const input = document.getElementById('githubTokenInput');
+  const saved = localStorage.getItem('github_upload_token') || '';
+  input.value = saved;
+  document.getElementById('settingsOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSettings() {
+  document.getElementById('settingsOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function saveSettings() {
+  const input = document.getElementById('githubTokenInput');
+  const token = input.value.trim();
+  if (!token) {
+    if (!confirm('留空会清除已保存的 Token，确定吗？')) return;
+  }
+  localStorage.setItem('github_upload_token', token);
+  closeSettings();
+  showToast(token ? '✅ Token 已保存' : '🗑️ Token 已清除');
+}
+
+// Auto-fill token from URL param ?token=xxx (方便后台辅助配置)
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const urlToken = params.get('token');
+  if (urlToken && urlToken.length > 10) {
+    localStorage.setItem('github_upload_token', urlToken);
+    if (window.history.replaceState) {
+      const url = new URL(window.location);
+      url.searchParams.delete('token');
+      window.history.replaceState({}, '', url);
+    }
+  }
+})();
 
 // ESC 关闭查看器
 document.addEventListener('keydown', function(e) {
