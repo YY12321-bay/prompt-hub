@@ -40,12 +40,12 @@
   /* ========== Hero 封面 ========== */
   .hero {
     position: relative;
-    min-height: 70vh;
+    min-height: 30vh;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 40px 20px;
+    padding: 30px 20px 20px;
     overflow: hidden;
     background: linear-gradient(135deg, #0f0f1a 0%, #1a1a3e 50%, #0f0f1a 100%);
   }
@@ -97,66 +97,34 @@
     50% { transform: translateY(-20px) scale(1.05); }
   }
 
-  .hero-content { position: relative; z-index: 1; max-width: 800px; }
+  .hero-content { position: relative; z-index: 1; max-width: 700px; }
   .hero-badge {
     display: inline-block;
     background: rgba(108,92,231,0.2);
     border: 1px solid rgba(108,92,231,0.3);
     color: var(--primary-light);
-    padding: 6px 20px;
+    padding: 4px 16px;
     border-radius: 20px;
-    font-size: 14px;
-    margin-bottom: 24px;
+    font-size: 12px;
+    margin-bottom: 12px;
     backdrop-filter: blur(10px);
   }
   .hero h1 {
-    font-size: clamp(36px, 6vw, 72px);
+    font-size: clamp(28px, 4vw, 48px);
     font-weight: 800;
     line-height: 1.1;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
     background: linear-gradient(135deg, #fff 0%, var(--primary-light) 50%, var(--accent) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
   .hero p {
-    font-size: clamp(16px, 2vw, 20px);
+    font-size: clamp(13px, 1.5vw, 16px);
     color: var(--text-muted);
-    max-width: 600px;
-    margin: 0 auto 32px;
-  }
-  .hero-search {
-    position: relative;
     max-width: 500px;
     margin: 0 auto;
   }
-  .hero-search input {
-    width: 100%;
-    padding: 16px 20px 16px 48px;
-    border: 1px solid var(--border);
-    border-radius: 50px;
-    background: rgba(255,255,255,0.05);
-    color: var(--text);
-    font-size: 16px;
-    backdrop-filter: blur(10px);
-    transition: var(--transition);
-    outline: none;
-  }
-  .hero-search input:focus {
-    border-color: var(--primary);
-    background: rgba(255,255,255,0.08);
-    box-shadow: 0 0 30px rgba(108,92,231,0.15);
-  }
-  .hero-search input::placeholder { color: var(--text-muted); }
-  .hero-search .search-icon {
-    position: absolute;
-    left: 18px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--text-muted);
-    font-size: 18px;
-  }
-
   /* ========== 统计栏 ========== */
   .stats-bar {
     display: flex;
@@ -204,9 +172,40 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
   }
   .nav-brand span { font-size: 22px; }
-  .nav-tabs { display: flex; gap: 4px; padding: 12px 0; flex-wrap: nowrap; }
+  .nav-tabs { display: flex; gap: 4px; padding: 12px 0; flex-wrap: nowrap; flex-shrink: 0; }
+  .nav-search {
+    margin-left: auto;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+  .nav-search input {
+    width: 200px;
+    padding: 8px 14px 8px 34px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text);
+    font-size: 13px;
+    outline: none;
+    transition: var(--transition);
+  }
+  .nav-search input:focus {
+    border-color: var(--primary);
+    background: rgba(255,255,255,0.08);
+    width: 240px;
+  }
+  .nav-search input::placeholder { color: var(--text-muted); }
+  .nav-search .search-icon {
+    position: absolute;
+    margin-left: 10px;
+    font-size: 14px;
+    color: var(--text-muted);
+    pointer-events: none;
+  }
   .nav-tab {
     padding: 8px 20px;
     border-radius: 10px;
@@ -657,11 +656,13 @@
 
   /* ========== 响应式 ========== */
   @media (max-width: 768px) {
-    .hero { min-height: 60vh; }
+    .hero { min-height: 25vh; }
     .prompt-grid { grid-template-columns: 1fr; }
     .stats-bar { gap: 20px; }
     .nav-inner { gap: 4px; }
     .nav-tab { padding: 6px 12px; font-size: 13px; }
+    .nav-search input { width: 120px; }
+    .nav-search input:focus { width: 150px; }
     .modal { padding: 24px; }
     .float-add { bottom: 24px; right: 24px; width: 52px; height: 52px; font-size: 24px; }
   }
@@ -682,11 +683,7 @@
   <div class="hero-content">
     <div class="hero-badge">✨ 灵感汇聚 · 一键复制</div>
     <h1>Prompt 灵感库</h1>
-    <p>精选高质量 AI 提示词，覆盖 3D、图标、字体、按钮、实物等设计场景，激发你的创作灵感</p>
-    <div class="hero-search">
-      <span class="search-icon">🔍</span>
-      <input type="text" id="searchInput" placeholder="搜索提示词..." oninput="renderPrompts()">
-    </div>
+    <p>精选高质量 AI 提示词，覆盖 3D、图标、字体、按钮、实物等设计场景</p>
   </div>
 </section>
 
@@ -711,6 +708,10 @@
   <div class="nav-inner">
     <div class="nav-brand"><span>⚡</span> PromptHub</div>
     <div class="nav-tabs" id="navTabs"></div>
+    <div class="nav-search">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="搜索提示词..." oninput="renderPrompts()">
+    </div>
   </div>
 </div>
 
