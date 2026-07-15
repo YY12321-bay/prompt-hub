@@ -900,26 +900,82 @@ const DEFAULT_PROMPTS = [
 //  数据源: localStorage || 默认
 // ============================================================
 const STORAGE_KEY = 'prompt_hub_data';
+const DB_NAME = 'PromptHubDB';
+const STORE_NAME = 'prompts';
 
-function loadPrompts() {
+// ------ IndexedDB 存储（容量大，适合存图片） ------
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 1);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    req.onsuccess = (e) => resolve(e.target.result);
+    req.onerror = (e) => reject(e.target.error);
+  });
+}
+
+async function loadPrompts() {
+  // 1) 优先 IndexedDB
+  try {
+    const db = await openDB();
+    const tx = db.transaction(STORE_NAME, 'readonly');
+    const store = tx.objectStore(STORE_NAME);
+    const data = await new Promise((res, rej) => {
+      const r = store.get(STORAGE_KEY);
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    });
+    db.close();
+    if (data) return data;
+  } catch (_) {}
+
+  // 2) 后备 localStorage（迁移旧数据）
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch (e) {}
-  // 给默认数据补上 coverImage 字段
+    if (saved) {
+      const data = JSON.parse(saved);
+      // 迁移到 IndexedDB 后删掉 localStorage
+      savePrompts(data);
+      try { localStorage.removeItem(STORAGE_KEY); } catch (_) {}
+      return data;
+    }
+  } catch (_) {}
+
+  // 3) 默认数据
   return JSON.parse(JSON.stringify(DEFAULT_PROMPTS)).map(p => ({ ...p, coverImage: p.coverImage || '' }));
 }
 
 function savePrompts(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  // 异步写入 IndexedDB，不阻塞 UI
+  openDB().then(db => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    store.put(data, STORAGE_KEY);
+    tx.oncomplete = () => db.close();
+  }).catch(() => {
+    // 极端 fallback：localStorage（可能因配额失败）
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (_) {}
+  });
 }
 
 // ============================================================
-//  状态
+//  状态（异步初始化）
 // ============================================================
-let prompts = loadPrompts();
+let prompts = [];
 let currentCategory = 'all';
-let nextId = prompts.length ? Math.max(...prompts.map(p => p.id)) + 1 : 1;
+let nextId = 1;
+
+(async function init() {
+  prompts = await loadPrompts();
+  nextId = prompts.length ? Math.max(...prompts.map(p => p.id)) + 1 : 1;
+  renderNav();
+  renderPrompts();
+  updateStats();
+})();
 
 // ============================================================
 //  渲染
@@ -1245,9 +1301,6 @@ function showToast(msg, duration = 2500) {
 window.onerror = function(msg, url, line) {
   showToast('❌ 页面错误: ' + msg + ' (第' + line + '行)');
 };
-renderNav();
-renderPrompts();
-updateStats();
 </script>
 </body>
 </html>
