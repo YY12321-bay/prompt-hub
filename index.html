@@ -355,6 +355,19 @@
   .btn-like:hover { background: rgba(253,121,168,0.1); color: var(--accent); border-color: var(--accent); }
   .btn-like.liked { background: rgba(253,121,168,0.15); color: var(--accent); border-color: var(--accent); }
 
+  .btn-delete {
+    background: transparent;
+    color: var(--text-muted);
+    padding: 8px 10px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+    border-radius: 8px;
+    line-height: 1;
+  }
+  .btn-delete:hover { background: rgba(253,121,168,0.15); color: var(--accent); }
+
   /* ========== 封面图片 ========== */
   .prompt-cover {
     width: 100%;
@@ -978,6 +991,7 @@ function renderPrompts() {
           <button class="btn btn-like ${p.liked ? 'liked' : ''}" onclick="toggleLike(${p.id}, this)">
             ${p.liked ? '❤️' : '🤍'} ${p.likes || 0}
           </button>
+          <button class="btn-delete" onclick="deletePrompt(${p.id})" title="删除">🗑️</button>
         </div>
       </div>
     `;
@@ -1045,6 +1059,20 @@ function toggleLike(id, btn) {
   p.likes = (p.likes || 0) + (p.liked ? 1 : -1);
   savePrompts(prompts);
   renderPrompts();
+}
+
+// ============================================================
+//  删除提示词
+// ============================================================
+function deletePrompt(id) {
+  const p = prompts.find(x => x.id === id);
+  if (!p) return;
+  if (!confirm(`确定要删除「${p.title}」吗？删除后不可恢复。`)) return;
+  prompts = prompts.filter(x => x.id !== id);
+  savePrompts(prompts);
+  renderPrompts();
+  updateStats();
+  showToast('🗑️ 已删除');
 }
 
 // ============================================================
