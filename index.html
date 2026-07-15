@@ -1109,34 +1109,42 @@ document.getElementById('modalOverlay').addEventListener('click', function(e) {
 
 function addPrompt(e) {
   e.preventDefault();
-  const title = document.getElementById('newTitle').value.trim();
-  const prompt = document.getElementById('newPrompt').value.trim();
-  const category = document.getElementById('newCategory').value;
-  const desc = document.getElementById('newDesc').value.trim();
-  const coverImage = document.getElementById('uploadArea').dataset.imageBase64 || '';
+  try {
+    const title = document.getElementById('newTitle').value.trim();
+    const promptEl = document.getElementById('newPrompt');
+    if (!promptEl) { showToast('❌ 找不到文案输入框'); return; }
+    const prompt = promptEl.value.trim();
+    const category = document.getElementById('newCategory').value;
+    const desc = document.getElementById('newDesc').value.trim();
+    const uploadArea = document.getElementById('uploadArea');
+    const coverImage = uploadArea ? (uploadArea.dataset.imageBase64 || '') : '';
 
-  if (!title || !prompt) {
-    showToast('请填写标题和提示词内容');
-    return;
+    if (!title || !prompt) {
+      showToast('请填写标题和提示词文案');
+      return;
+    }
+
+    prompts.push({
+      id: nextId++,
+      title,
+      prompt,
+      category,
+      desc: desc || `${category} 提示词`,
+      coverImage,
+      likes: 0,
+      liked: false,
+      createdAt: new Date().toISOString()
+    });
+
+    savePrompts(prompts);
+    closeModal();
+    switchCategory(category);
+    updateStats();
+    showToast('✅ 提示词已添加！');
+  } catch (err) {
+    showToast('❌ 出错: ' + err.message);
+    console.error(err);
   }
-
-  prompts.push({
-    id: nextId++,
-    title,
-    prompt,
-    category,
-    desc: desc || `${category} 提示词`,
-    coverImage,
-    likes: 0,
-    liked: false,
-    createdAt: new Date().toISOString()
-  });
-
-  savePrompts(prompts);
-  closeModal();
-  switchCategory(category);
-  updateStats();
-  showToast('✅ 提示词已添加！');
 }
 
 // ============================================================
@@ -1234,6 +1242,9 @@ function showToast(msg, duration = 2500) {
 // ============================================================
 //  启动
 // ============================================================
+window.onerror = function(msg, url, line) {
+  showToast('❌ 页面错误: ' + msg + ' (第' + line + '行)');
+};
 renderNav();
 renderPrompts();
 updateStats();
