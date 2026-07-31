@@ -335,6 +335,15 @@
     background: rgba(0,0,0,0.15);
   }
   .image-upload-area:hover { border-color: var(--primary); background: rgba(108,92,231,0.05); }
+  .image-upload-area:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(108,92,231,0.25); }
+  .image-upload-area kbd {
+    background: rgba(108,92,231,0.15);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 11px;
+    font-family: inherit;
+  }
   .image-upload-area .upload-icon { font-size: 32px; margin-bottom: 8px; }
   .image-upload-area .upload-text { font-size: 14px; color: var(--text-muted); }
   .image-upload-area .upload-hint { font-size: 12px; color: var(--text-muted); opacity: 0.6; margin-top: 4px; }
@@ -655,10 +664,10 @@
       </div>
       <div class="form-group">
         <label>封面图片</label>
-        <div class="image-upload-area" id="uploadArea">
+        <div class="image-upload-area" id="uploadArea" tabindex="0">
           <div class="upload-icon">🖼️</div>
-          <div class="upload-text">点击选择封面图片</div>
-          <div class="upload-hint">支持 JPG / PNG / WebP，单张 ≤ 5MB<br>可从 F:\公司文件\在线提示词图片库 选取</div>
+          <div class="upload-text">点击选择 或 Ctrl+V 粘贴封面图片</div>
+          <div class="upload-hint">支持 JPG / PNG / WebP，单张 ≤ 5MB<br>截图后直接按 <kbd>Ctrl</kbd>+<kbd>V</kbd> 粘贴到这里<br>也可从 F:\公司文件\在线提示词图片库 选取</div>
           <img class="upload-preview" id="uploadPreview" alt="预览">
           <button type="button" class="upload-remove" onclick="removeCoverImage(event)">✕</button>
           <input type="file" id="imageInput" accept="image/*" onchange="handleImageUpload(event)">
@@ -942,6 +951,7 @@ let nextId = 1;
 (async function init() {
   prompts = await loadPrompts();
   nextId = prompts.length ? Math.max(...prompts.map(p => p.id)) + 1 : 1;
+  setupPasteUpload();
   renderNav();
   renderPrompts();
   updateStats();
@@ -1174,10 +1184,15 @@ function addPrompt(e) {
 }
 
 // ============================================================
-//  封面图片处理
+//  封面图片处理（支持 文件选择 / 剪贴板粘贴）
 // ============================================================
 async function handleImageUpload(event) {
   const file = event.target.files[0];
+  await uploadCoverFile(file);
+}
+
+/** 核心上传：预览 → 上传 GitHub → 记录 URL */
+async function uploadCoverFile(file) {
   if (!file) return;
   if (file.size > 5 * 1024 * 1024) {
     showToast('图片大小不能超过 5MB');
@@ -1213,6 +1228,42 @@ async function handleImageUpload(event) {
     preview.src = '';
     console.error(err);
   }
+}
+
+/** 从剪贴板事件提取图片并上传；成功返回 true */
+async function extractPastedImage(e) {
+  const items = (e.clipboardData || {}).items;
+  if (!items) return false;
+  for (const item of items) {
+    if (item.kind === 'file' && item.type && item.type.startsWith('image/')) {
+      const blob = item.getAsFile();
+      if (blob) {
+        e.preventDefault();
+        const ext = (item.type.split('/')[1] || 'png').replace(/[^a-z0-9]/, '') || 'png';
+        // 剪贴板 blob 常缺扩展名，补一个标准名字
+        const file = new File([blob], 'pasted-' + Date.now() + '.' + ext, { type: item.type });
+        await uploadCoverFile(file);
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/** 粘贴监听：上传区域聚焦时 或 焦点不在文本输入框时，Ctrl+V 图片即上传 */
+function setupPasteUpload() {
+  const area = document.getElementById('uploadArea');
+  if (!area) return;
+  area.addEventListener('paste', async (e) => {
+    if (await extractPastedImage(e)) return;
+  });
+  document.addEventListener('paste', async (e) => {
+    const ae = document.activeElement;
+    const isTyping = ae && (ae.tagName === 'INPUT' || ae.tagName === 'TEXTAREA' ||
+                           ae.tagName === 'SELECT' || ae.isContentEditable);
+    if (isTyping) return; // 正在输入文字时不拦截
+    if (await extractPastedImage(e)) return;
+  });
 }
 
 function removeCoverImage(e) {
